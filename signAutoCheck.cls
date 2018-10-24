@@ -7,88 +7,88 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
-' ��ʼ������
-' ����ǩ����ʼʱ��
+' 初始化常量
+' 上午签到开始时间
 Const AmStart As String = "08:00:00"
-' ����ǩ������ʱ��
+' 上午签到结束时间
 Const AmEnd As String = "09:00:00"
-' ����ǩ����ʼʱ��
+' 中午签到开始时间
 Const noonStart As String = "13:00:00"
-' ����ǩ������ʱ��
+' 中午签到结束时间
 Const noonEnd As String = "14:00:00"
-' ����ǩ����ʼʱ��
+' 下午签到开始时间
 Const PmStart As String = "18:00:00"
-' ����ǩ������ʱ��
+' 下午签到结束时间
 Const PmEnd As String = "21:00:00"
-'Y-��˱�ע  Z-��Чǩ������  AA-�����涨����
+'Y-审核备注  Z-无效签到次数  AA-超出规定次数
 Const reviewCol As String = "Y"
 Const invalidCheckCol As String = "Z"
 Const excessCountCol As String = "AA"
-'������
+'姓名列
 Const nameCol As String = "A"
-'������
+'日期列
 Const dateCol As String = "F"
-Sub ���ǩ������()
-' ˼·:
-' ���������� У��ͼƬ�в�Ϊ�� ����ݷö���ͱ�ע��ͬʱΪ��
-' ����ÿ������ʱ���Ƿ��ڹ涨ʱ���� ��ʱ�����ݼ�Ϊ��Ч���� ������ ʱ���� ÿ��������ǩ������
+Sub 检查签到数据()
+' 思路:
+' 按姓名分组 校验图片列不为空 检验拜访对象和备注不同时为空
+' 检验每天三次时间是否在规定时间内 无时间数据即为无效数据 日期列 时间列 每日有三次签到数据
 
-' ����ÿ�¿�����9����Чǩ������δǩ����    ������������12����Чǩ������δǩ����
-' ����ְλ�趨��Чǩ����ֵ ������ֵʱ�ڳ����涨��������� ��������
-' ����˱�ע�� ������Чǩ��˵�� ����:
-'   2018-10-10 ȫ��ǩ���ްݷö���
-'   2018-10-11 ����ǩ���ްݷö���
-'   2018-10-13 ����δǩ��
-'   2018-10-14  ����δǩ��
-'   ����δǩ��
-'   7 ����Чǩ��
+' 督导每月可以有9次无效签到（含未签到）    区域经理可以有12次无效签到（含未签到）
+' 根据职位设定无效签到阈值 超过阈值时在超出规定次数列输出 超出次数
+' 在审核备注列 设置无效签到说明 如下:
+'   2018-10-10 全天签到无拜访对象
+'   2018-10-11 早上签到无拜访对象
+'   2018-10-13 早上未签到
+'   2018-10-14  中午未签到
+'   下午未签到
+'   7 次无效签到
 
-' A-����    C-����  D-��������  E-ְλ  F-����  G-ʱ��  H-�ص�  I-��ϸ��ַ  L-�ݷö���  M-��ע  P-ͼƬ
-' Y-��˱�ע  Z-��Чǩ������  AA-�����涨����
+' A-姓名    C-部门  D-完整部门  E-职位  F-日期  G-时间  H-地点  I-详细地址  L-拜访对象  M-备注  P-图片
+' Y-审核备注  Z-无效签到次数  AA-超出规定次数
 'Application.ScreenUpdate = False
 
-MsgBox "���������⽴��������"
-' ѭ������
+MsgBox "美丽的柒柒酱工作快乐"
+' 循环变量
 Dim i As Integer
 
-' ��˱�ע
+' 审核备注
 Dim reviewNote As String
-' ��˱��
+' 审核标记
 'Dim reviewFlag As Boolean
 reviewFlag = True
-' ��Чǩ������
+' 无效签到次数
 Dim invalidCheckNum As Integer
-' ��Чǩ������
+' 有效签到次数
 Dim validCheckNum As Integer
-' �����涨����
+' 超出规定次数
 Dim excessCount As Integer
 
-' ��˱��
-'   ��λ:ʱ����˱��
-'       0-��������У��Ϊ��ǩ��ʱ���û�з��ϵ�ʱ���
-'       1-��������У��Ϊ����ǩ��ʱ��
-'       2-��������У��Ϊ����ǩ��ʱ��
-'       3-��������У��Ϊ����ǩ��ʱ��
-'   ʮλ:ͼƬ��У����
-'       1-У��ͨ��
-'       2-У�鲻ͨ��
-'   ��λ:�ݷö���ͱ�ע��ͬʱΪ��У����
-'       1-У��ͨ��
-'       2-У�鲻ͨ��
+' 审核标记
+'   个位:时间审核标记
+'       0-该行数据校验为无签到时间或没有符合的时间段
+'       1-该行数据校验为上午签到时间
+'       2-该行数据校验为上午签到时间
+'       3-该行数据校验为上午签到时间
+'   十位:图片列校验标记
+'       1-校验通过
+'       2-校验不通过
+'   百位:拜访对象和备注不同时为空校验标记
+'       1-校验通过
+'       2-校验不通过
 Dim dateCheckFlag As Integer
 dateCheckFlag = 0
 
-' ������ʼ�к�
+' 数据起始行号
 i = 4
-' ����ȫ������
+' 遍历全部数据
 Do While Cells(i, dateCol) <> ""
-    ' ��ʼ��Чǩ�������볬���涨����
+    ' 初始无效签到次数与超出规定次数
     invalidCheckNum = 0
     excessCount = 0
-    ' ���� ĳ�˵�ȫ��ǩ������
+    ' 遍历 某人的全部签到数据
     Dim personCow As Integer
     personCow = i
-    ' ��ȡĳ�˼�¼����ֹ�к�
+    ' 获取某人记录的终止行号
     Do While Cells(personCow, nameCol) = Cells(personCow + 1, nameCol)
         personCow = personCow + 1
     Loop
@@ -98,18 +98,18 @@ Do While Cells(i, dateCol) <> ""
         dateCheckFlag = 0
         Dim dayCow As Integer
         dayCow = i
-        ' ��ȡĳ��ĳ�յ���ֹ�к�
+        ' 获取某人某日的终止行号
         Do While Cells(dayCow, "F") = Cells(dayCow + 1, dateCol) And dayCow < personCow
             dayCow = dayCow + 1
         Loop
-        ' ��ʼ��¼����
+        ' 初始记录数组
         Dim k As Integer
         k = 1
         Dim dayCount As Integer
         dayCount = dayCow + 1 - i
         Dim arr()
         ReDim arr(1 To dayCount)
-        ' ���� ĳ��ĳ�յ�ȫ��ǩ������
+        ' 遍历 某人某日的全部签到数据
         Do While i <= dayCow
             dateCheckFlag = check(i)
             'Sheet1.Cells(i, "AB").Value = dateCheckFlag
@@ -119,7 +119,7 @@ Do While Cells(i, dateCol) <> ""
         Loop
         reviewNote = Cells(i - 1, dateCol) & Chr(10)
         validCheckNum = 0
-        ' ����ͨ������ 0-δͨ�� 1-ͨ��
+        ' 检验通过数组 0-未通过 1-通过
         Dim arrSign(1 To 3)
         arrSign(1) = 0
         arrSign(2) = 0
@@ -137,85 +137,85 @@ Do While Cells(i, dateCol) <> ""
             reviewNote = ""
         Else
             If arrSign(1) = 0 And arrSign(2) = 0 Then
-                reviewNote = reviewNote + " ����δǩ�� ����δǩ��"
+                reviewNote = reviewNote + " 上午未签到 中午未签到"
                 invalidCheckNum = invalidCheckNum + 2
             ElseIf arrSign(1) = 0 And arrSign(3) = 0 Then
-                reviewNote = reviewNote + " ����δǩ�� ����δǩ��"
+                reviewNote = reviewNote + " 上午未签到 下午未签到"
                 invalidCheckNum = invalidCheckNum + 2
             ElseIf arrSign(2) = 0 And arrSign(3) = 0 Then
-                reviewNote = reviewNote + " ����δǩ�� ����δǩ"
+                reviewNote = reviewNote + " 中午未签到 下午未签"
                 invalidCheckNum = invalidCheckNum + 2
             ElseIf arrSign(1) = 0 Then
-                reviewNote = reviewNote + " ����δǩ��"
+                reviewNote = reviewNote + " 上午未签到"
                 invalidCheckNum = invalidCheckNum + 1
             ElseIf arrSign(2) = 0 Then
-                reviewNote = reviewNote + " ����δǩ��"
+                reviewNote = reviewNote + " 中午未签到"
                 invalidCheckNum = invalidCheckNum + 1
             ElseIf arrSign(3) = 0 Then
-                reviewNote = reviewNote + " ����δǩ��"
+                reviewNote = reviewNote + " 下午未签到"
                 invalidCheckNum = invalidCheckNum + 1
             Else
-                reviewNote = reviewNote + " ȫ��δǩ��"
+                reviewNote = reviewNote + " 全天未签到"
                 invalidCheckNum = invalidCheckNum + 3
             End If
         End If
-         ' ������Ԫ�����
+         ' 声明单元格对象
         Dim reviewNoteRange As Range
-        ' �����ϲ�����
+        ' 声明合并区域
         Dim reviewNoteStr As String
         reviewNoteStr = reviewCol & CStr(i - dayCount) & ":" & reviewCol & CStr(i - 1)
-        ' ����Ԫ�����ֵΪָ������,����ָ�����ⵥԪ��
+        ' 给单元格对象赋值为指定区域,可以指定任意单元格
         Set reviewNoteRange = Range(reviewNoteStr)
-        ' �ϲ��õ�Ԫ������
+        ' 合并该单元格区域
         reviewNoteRange.Merge
-        ' �ͷŵ�Ԫ�����
+        ' 释放单元格变量
         Set reviewNoteRange = Nothing
-        ' ������˴�����˱�ע
+        ' 输出此人此日审核备注
         Sheet1.Cells(i - dayCount, reviewCol).Value = reviewNote
     Loop
-    ' ������Ԫ�����
+    ' 声明单元格对象
     Dim invalidCheckRange As Range
-    ' �����ϲ�����
+    ' 声明合并区域
     Dim invalidCheckStr As String
     invalidCheckStr = invalidCheckCol & CStr(i - personCount) & ":" & invalidCheckCol & CStr(i - 1)
-    ' ����Ԫ�����ֵΪָ������,����ָ�����ⵥԪ��
+    ' 给单元格对象赋值为指定区域,可以指定任意单元格
     Set invalidCheckRange = Range(invalidCheckStr)
-    ' �ϲ��õ�Ԫ������
+    ' 合并该单元格区域
     invalidCheckRange.Merge
-    ' �ͷŵ�Ԫ�����
+    ' 释放单元格变量
     Set invalidCheckRange = Nothing
-    ' ���������Чǩ������
-    Sheet1.Cells(i - personCount, invalidCheckCol).Value = "��Чǩ������:" & CStr(invalidCheckNum) & "��"
-    ' ��������涨���� ����ְλ������ֵ
-    If Sheet1.Cells(i - 1, "E").Value = "������" Then
+    ' 输出此人无效签到次数
+    Sheet1.Cells(i - personCount, invalidCheckCol).Value = "无效签到次数:" & CStr(invalidCheckNum) & "次"
+    ' 输出超过规定次数 根据职位设置阈值
+    If Sheet1.Cells(i - 1, "E").Value = "区域经理" Then
         excessCount = invalidCheckNum - 12
-    ElseIf Sheet1.Cells(i - 1, "E").Value = "����" Then
+    ElseIf Sheet1.Cells(i - 1, "E").Value = "督导" Then
         excessCount = invalidCheckNum - 9
     End If
-    ' ������Ԫ�����
+    ' 声明单元格对象
     Dim excessCountRange As Range
-    ' �����ϲ�����
+    ' 声明合并区域
     Dim excessCountStr As String
     excessCountStr = excessCountCol & CStr(i - personCount) & ":" & excessCountCol & CStr(i - 1)
-    ' ����Ԫ�����ֵΪָ������,����ָ�����ⵥԪ��
+    ' 给单元格对象赋值为指定区域,可以指定任意单元格
     Set excessCountRange = Range(excessCountStr)
-    ' �ϲ��õ�Ԫ������
+    ' 合并该单元格区域
     excessCountRange.Merge
-    ' �ͷŵ�Ԫ�����
+    ' 释放单元格变量
     Set invalidCheckRange = Nothing
     If excessCount > 0 Then
-        Sheet1.Cells(i - personCount, excessCountCol).Value = "�����涨����:" & CStr(excessCount) & "��"
+        Sheet1.Cells(i - personCount, excessCountCol).Value = "超出规定次数:" & CStr(excessCount) & "次"
     End If
 Loop
 End Sub
-' ����ÿһ������ i-����ѭ������
+' 检验每一行数据 i-整体循环变量
 Function check(i As Integer)
-    ' ��˱��
+    ' 审核标记
     Dim dateCheckFlag As Integer
     dateCheckFlag = 0
-    ' ÿ�ν���ѭ��������˱��Ϊ��Ч
+    ' 每次进入循环设置审核标记为有效
     'reviewFlag = True
-    ' У��ʱ��
+    ' 校验时间
     If Cells(i, "G") = "" Then
         dateCheckFlag = 0
     Else
@@ -223,13 +223,13 @@ Function check(i As Integer)
        dateValue = TimeValue(Cells(i, "G"))
        dateCheckFlag = checkDate(dateValue)
     End If
-    ' У��ͼƬ��
+    ' 校验图片列
     If Cells(i, "P") = "" Then
         dateCheckFlag = 20 + dateCheckFlag
     Else
         dateCheckFlag = 10 + dateCheckFlag
     End If
-     ' У��ݷö���ͱ�ע��ͬʱΪ��
+     ' 校验拜访对象和备注不同时为空
     If Cells(i, "L") = "" And Cells(i, "M") = "" Then
         dateCheckFlag = 200 + dateCheckFlag
     Else
@@ -237,7 +237,7 @@ Function check(i As Integer)
     End If
     check = dateCheckFlag
 End Function
-' У��ʱ���Ƿ���ָ������ checkTime-��ҪУ���ʱ��
+' 校验时间是否在指定区间 checkTime-需要校验的时间
 Function checkDate(checkTime As Date)
     Dim dateCheckFlag As Integer
     dateCheckFlag = 0
